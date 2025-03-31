@@ -97,7 +97,7 @@ export default function GeradorContratoImovel() {
       dadosCorretor: ''
     },
     dataContrato: new Date().toLocaleDateString('pt-BR')
-  })
+    [key: string]: any; // Isso deixa o computador menos bravo com nossos códigos})
 
   const [contratoGerado, setContratoGerado] = useState(false)
 
@@ -109,14 +109,16 @@ export default function GeradorContratoImovel() {
   grupo: K,
   campo: F
 ) => {
-  setDados(prev => ({
-    ...prev,
-    [grupo]: {
-      ...prev[grupo],
-      [campo]: e.target.value
-    }
-  }));
-}
+  setDados(prev => {
+    const currentGroup = prev[grupo] ?? {}; // Isso é como um "plano B" se algo estiver vazio
+    return {
+      ...prev,
+      [grupo]: {
+        ...currentGroup,
+        [campo]: e.target.value
+      }
+    };
+  });
 
   const gerarContrato = () => {
     // Validação básica dos campos obrigatórios
