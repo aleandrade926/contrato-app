@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+
 interface DadosContrato {
   vendedor: {
     nome: string;
@@ -48,9 +49,9 @@ interface DadosContrato {
   };
   dataContrato: string;
 }
+
 export default function GeradorContratoImovel() {
-  // Estados para todos os dados do contrato
-  const [dados, setDados] = useState({
+  const [dados, setDados] = useState<DadosContrato>({
     vendedor: {
       nome: '',
       estadoCivil: '',
@@ -97,9 +98,9 @@ export default function GeradorContratoImovel() {
       dadosCorretor: ''
     },
     dataContrato: new Date().toLocaleDateString('pt-BR')
-    [key: string]: any; // Isso deixa o computador menos bravo com nossos códigos})
+  });
 
-  const [contratoGerado, setContratoGerado] = useState(false)
+  const [contratoGerado, setContratoGerado] = useState(false);
 
   const handleChange = <
   K extends keyof DadosContrato,
@@ -109,55 +110,58 @@ export default function GeradorContratoImovel() {
   grupo: K,
   campo: F
 ) => {
-  setDados(prev => {
-    const currentGroup = prev[grupo] ?? {}; // Isso é como um "plano B" se algo estiver vazio
-    return {
-      ...prev,
-      [grupo]: {
-        ...currentGroup,
-        [campo]: e.target.value
-      }
-    };
-  });
+  setDados(prev => ({
+    ...prev,
+    [grupo]: {
+      ...(prev[grupo] as object), // Correção aqui
+      [campo]: e.target.value
+    }
+  }));
+}
 
   const gerarContrato = () => {
-    // Validação básica dos campos obrigatórios
     if (!dados.vendedor.nome || !dados.comprador.nome || !dados.imovel.descricao) {
-      alert('Por favor, preencha os campos obrigatórios: Vendedor, Comprador e Descrição do Imóvel')
-      return
+      alert('Por favor, preencha os campos obrigatórios: Vendedor, Comprador e Descrição do Imóvel');
+      return;
     }
-    setContratoGerado(true)
+    setContratoGerado(true);
   }
 
   const voltarParaEdicao = () => {
-    setContratoGerado(false)
+    setContratoGerado(false);
   }
 
-  // Função para formatar valores monetários
-  const formatarMoeda = (valor:string) => {
-    return valor ? new Intl.NumberFormat('pt-BR', { 
+  const formatarMoeda = (valor: string) => {
+    if (!valor) return '_____________';
+    const numberValue = Number(valor.replace(/[^0-9,-]/g, '').replace(',', '.'));
+    return new Intl.NumberFormat('pt-BR', { 
       style: 'currency', 
       currency: 'BRL' 
-    }).format(Number(valor)) : '_____________'
+    }).format(numberValue);
   }
 
-  // Função para converter números para extenso
-  const numeroPorExtenso = (numero: number) => {
-    const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove']
-    const de10a19 = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove']
-    const dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa']
-
-    if (numero < 10) return unidades[numero]
-    if (numero >= 10 && numero < 20) return de10a19[numero - 10]
+  const numeroPorExtenso = (numero: number): string => { // Correção aqui
+    const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+    const de10a19 = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+    const dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+    const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+  
+    if (numero === 100) return 'cem';
+    if (numero < 10) return unidades[numero];
+    if (numero >= 10 && numero < 20) return de10a19[numero - 10];
     if (numero >= 20 && numero < 100) {
-      const dezena = Math.floor(numero / 10)
-      const unidade = numero % 10
-      return dezenas[dezena] + (unidade !== 0 ? ' e ' + unidades[unidade] : '')
+      const dezena = Math.floor(numero / 10);
+      const unidade = numero % 10;
+      return dezenas[dezena] + (unidade !== 0 ? ' e ' + unidades[unidade] : '');
     }
-    return numero.toString()
+    if (numero >= 100 && numero < 1000) {
+      const centena = Math.floor(numero / 100);
+      const resto = numero % 100;
+      return centenas[centena] + (resto !== 0 ? ' e ' + numeroPorExtenso(resto) : '');
+    }
+    return numero.toString();
   }
 
-  // Renderização do contrato completo
   const renderContratoCompleto = () => (
     <div style={{ 
       padding: '40px',
@@ -167,7 +171,6 @@ export default function GeradorContratoImovel() {
       maxWidth: '800px',
       margin: '0 auto'
     }}>
-      {/* Cabeçalho do Contrato */}
       <h1 style={{ 
         textAlign: 'center', 
         textTransform: 'uppercase',
@@ -176,15 +179,19 @@ export default function GeradorContratoImovel() {
       }}>
         Instrumento Particular de Promessa de Venda e Compra de Bem Imóvel Residencial
       </h1>
-      {/* Preâmbulo */}
+      
       <p style={{ textAlign: 'justify', textIndent: '50px' }}>
-      Pelo presente Instrumento Particular de Promessa de Venda e Compra de bem imóvel ("Instrumento") e na melhor forma de direito, de um lado: <strong>{dados.vendedor.nome || '________________'}</strong>, <strong>{dados.vendedor.nacionalidade || '________________'}</strong>, <strong>{dados.vendedor.estadoCivil || '________________'}</strong>, <strong>{dados.vendedor.profissao || '________________'}</strong>, portador(a) da Cédula de Identidade RG: <strong>{dados.vendedor.rg || '________________'}</strong>, inscrito(a) no CPF: <strong>{dados.vendedor.cpf || '________________'}</strong>, residente e domiciliado(a) na <strong>{dados.vendedor.endereco || '________________'}</strong>: <strong>{dados.vendedor.email || '________________'}</strong>, doravante denominada "PARTE VENDEDORA";
+        Pelo presente Instrumento Particular de Promessa de Venda e Compra de bem imóvel ("Instrumento") e na melhor forma de direito, de um lado: <strong>{dados.vendedor.nome || '________________'}</strong>, <strong>{dados.vendedor.nacionalidade || '________________'}</strong>, <strong>{dados.vendedor.estadoCivil || '________________'}</strong>, <strong>{dados.vendedor.profissao || '________________'}</strong>, portador(a) da Cédula de Identidade RG: <strong>{dados.vendedor.rg || '________________'}</strong>, inscrito(a) no CPF: <strong>{dados.vendedor.cpf || '________________'}</strong>, residente e domiciliado(a) na <strong>{dados.vendedor.endereco || '________________'}</strong>, e-mail: <strong>{dados.vendedor.email || '________________'}</strong>, doravante denominada "PARTE VENDEDORA";
       </p>
+      
+      <p style={{ textAlign: 'justify', textIndent: '50px', marginTop: '20px' }}>
+        e de outro lado: <strong>{dados.comprador.nome || '________________'}</strong>, <strong>{dados.comprador.nacionalidade || '________________'}</strong>, <strong>{dados.comprador.estadoCivil || '________________'}</strong>, <strong>{dados.comprador.profissao || '________________'}</strong>, portador(a) da Cédula de Identidade RG: <strong>{dados.comprador.rg || '________________'}</strong>, inscrito(a) no CPF: <strong>{dados.comprador.cpf || '________________'}</strong>, residente e domiciliado(a) na <strong>{dados.comprador.endereco || '________________'}</strong>, e-mail: <strong>{dados.comprador.email || '________________'}</strong>, doravante denominada "PARTE COMPRADORA";
+      </p>
+
       <p style={{ textAlign: 'justify', marginTop: '20px' }}>
         As partes acima mencionadas e devidamente qualificadas têm entre si justos e contratados as cláusulas e condições que mutuamente declaram, outorgam e aceitam, a saber: 
       </p>
 
-      {/* Cláusula 1 - Do Imóvel */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -209,10 +216,9 @@ export default function GeradorContratoImovel() {
       </div>
 
       <p style={{ textAlign: 'justify', textIndent: '50px' }}>
-        1.2 O imóvel acima descrito está inscrito no contribuinte da Prefeitura do Município de São Paulo sob o nº <strong>{dados.imovel.contribuintePrefeitura || '________________'}</strong>, encontra-se sem débitos tributários de qualquer espécie. 
+        1.2 O imóvel acima descrito está inscrito no contribuinte da Prefeitura do Município de <strong>{dados.imovel.municipio || '________________'}</strong> sob o nº <strong>{dados.imovel.contribuintePrefeitura || '________________'}</strong>, encontra-se sem débitos tributários de qualquer espécie. 
       </p>
 
-      {/* Cláusula 2 - Do Preço e Condições de Pagamento */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -223,7 +229,7 @@ export default function GeradorContratoImovel() {
       </h2>
 
       <p style={{ textAlign: 'justify', textIndent: '50px' }}>
-        2.1. O preço total, certo e ajustado da presente negociação é de <strong>{formatarMoeda(dados.pagamento.valorTotal)}</strong>, que deverá ser pago pela PARTE COMPRADORA da seguinte forma: 
+        2.1. O preço total, certo e ajustado da presente negociação é de <strong>{formatarMoeda(dados.pagamento.valorTotal)}</strong> ({dados.pagamento.valorTotal ? numeroPorExtenso(Number(dados.pagamento.valorTotal.replace(/[^0-9]/g, ''))) : '_____________'}), que deverá ser pago pela PARTE COMPRADORA da seguinte forma: 
       </p>
 
       <ol style={{ listStyleType: 'lower-alpha', paddingLeft: '70px' }}>
@@ -246,7 +252,6 @@ export default function GeradorContratoImovel() {
         2.3 As datas dos pagamentos informadas na Cláusula 2.1 acima, poderão de comum acordo ser alteradas desde que aceitas por ambas as partes.
       </p>
 
-      {/* Cláusula 3 - Da Documentação */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -295,7 +300,6 @@ export default function GeradorContratoImovel() {
         3.4 O presente instrumento é pactuado com Cláusula expressa de IRREVOGABILIDADE e IRRETRATABILIDADE, não sendo lícito a qualquer das Partes arrepender-se das cláusulas e condições aqui estabelecidas, por si, seus herdeiros, ou eventuais sucessores, a quaisquer títulos, renunciando as partes expressamente ao direito de arrependimento.
       </p>
 
-      {/* Cláusula 4 - Da Imissão da Posse */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -321,7 +325,6 @@ export default function GeradorContratoImovel() {
         4.4 O imóvel deverá ser entregue à PARTE COMPRADORA livre e desembaraçado de pessoas e coisas.
       </p>
 
-      {/* Cláusula 5 - Das Obrigações */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -369,7 +372,6 @@ export default function GeradorContratoImovel() {
         </li>
       </ol>
 
-      {/* Cláusula 6 - Da Multa */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -387,7 +389,6 @@ export default function GeradorContratoImovel() {
         6.2 Em caso de desistência ou inadimplemento por parte da PARTE VENDEDORA, ficará esta obrigada ao pagamento de multa compensatória no valor de 10% (dez por cento) sobre o valor total do negócio, além da restituição em dobro dos valores eventualmente recebidos a título de sinal, sem prejuízo da obrigação de reparar eventuais danos causados.
       </p>
 
-      {/* Cláusula 7 - Da Escritura */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -405,7 +406,6 @@ export default function GeradorContratoImovel() {
         7.2 Todas as despesas decorrentes da lavratura da escritura pública, inclusive ITBI, emolumentos cartorários, honorários advocatícios, registro da escritura, dentre outros, correrão por conta da PARTE VENDEDORA.
       </p>
 
-      {/* Cláusula 8 - Da Intermediação Imobiliária */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -418,11 +418,11 @@ export default function GeradorContratoImovel() {
       <p style={{ textAlign: 'justify', textIndent: '50px' }}>
         8.1 As partes reconhecem que a negociação objeto deste instrumento foi intermediada por {dados.comissao.imobiliaria || '________________'}, representada pelo corretor de imóveis {dados.comissao.corretor || '________________'}, que fará jus à comissão no valor de {formatarMoeda(dados.comissao.valor)}, a ser paga pela PARTE VENDEDORA na data da lavratura da escritura pública.
       </p>
- <p style={{ textAlign: 'justify', textIndent: '50px' }}>
+
+      <p style={{ textAlign: 'justify', textIndent: '50px' }}>
         8.2 A comissão deverá ser paga mediante depósito na seguinte conta bancária: {dados.comissao.dadosImobiliaria || '________________'}.
       </p>
 
-      {/* Cláusula 9 - Do Foro */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -436,7 +436,6 @@ export default function GeradorContratoImovel() {
         9.1 Para dirimir quaisquer controvérsias oriundas do presente instrumento, as partes elegem o foro da Comarca de <strong>{dados.imovel.municipio || '________________'}</strong>, com renúncia expressa a qualquer outro, por mais privilegiado que seja.
       </p>
 
-      {/* Cláusula 10 - Das Disposições Gerais */}
       <h2 style={{ 
         textAlign: 'center', 
         marginTop: '30px',
@@ -453,38 +452,41 @@ export default function GeradorContratoImovel() {
       <p style={{ textAlign: 'justify', textIndent: '50px' }}>
         10.2 As partes declaram que leram e compreenderam todas as cláusulas deste instrumento, concordando integralmente com seu teor, assinando-o em duas vias de igual teor e forma, juntamente com duas testemunhas.
       </p>
-{/* Rodapé do Contrato */}
-      <><div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between' }}>
-    <div style={{ textAlign: 'center', width: '45%' }}>
-      <p>_________________________________________</p>
-      <p>PARTE VENDEDORA</p>
-      <p><strong>{dados.vendedor.nome || '[Nome do Vendedor]'}</strong></p>
-    </div>
 
-    <div style={{ textAlign: 'center', width: '45%' }}>
-      <p>_________________________________________</p>
-      <p>PARTE COMPRADORA</p>
-      <p><strong>{dados.comprador.nome || '[Nome do Comprador]'}</strong></p>
-    </div>
-  </div><div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-around' }}>
-      <div style={{ textAlign: 'center', width: '45%' }}>
-        <p>_________________________________________</p>
-        <p>TESTEMUNHA</p>
-        <p>Nome: _________________________</p>
-        <p>CPF: _________________________</p>
+      <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ textAlign: 'center', width: '45%' }}>
+          <p>_________________________________________</p>
+          <p>PARTE VENDEDORA</p>
+          <p><strong>{dados.vendedor.nome || '[Nome do Vendedor]'}</strong></p>
+        </div>
+
+        <div style={{ textAlign: 'center', width: '45%' }}>
+          <p>_________________________________________</p>
+          <p>PARTE COMPRADORA</p>
+          <p><strong>{dados.comprador.nome || '[Nome do Comprador]'}</strong></p>
+        </div>
       </div>
 
-      <div style={{ textAlign: 'center', width: '45%' }}>
-        <p>_________________________________________</p>
-        <p>TESTEMUNHA</p>
-        <p>Nome: _________________________</p>
-        <p>CPF: _________________________</p>
-      </div>
-    </div><p style={{ textAlign: 'center', marginTop: '30px' }}>
-      São Paulo, {dados.dataContrato}.
-    </p></>
+      <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-around' }}>
+        <div style={{ textAlign: 'center', width: '45%' }}>
+          <p>_________________________________________</p>
+          <p>TESTEMUNHA</p>
+          <p>Nome: _________________________</p>
+          <p>CPF: _________________________</p>
+        </div>
 
-      {/* Botões de Ação */}
+        <div style={{ textAlign: 'center', width: '45%' }}>
+          <p>_________________________________________</p>
+          <p>TESTEMUNHA</p>
+          <p>Nome: _________________________</p>
+          <p>CPF: _________________________</p>
+        </div>
+      </div>
+
+      <p style={{ textAlign: 'center', marginTop: '30px' }}>
+        {dados.imovel.municipio || 'São Paulo'}, {dados.dataContrato}.
+      </p>
+
       <div style={{ marginTop: '40px', textAlign: 'center' }}>
         <button 
           onClick={voltarParaEdicao}
@@ -516,16 +518,14 @@ export default function GeradorContratoImovel() {
         </button>
       </div>
     </div>
-  )
+  );
 
-  // Renderização do formulário de preenchimento
   const renderFormulario = () => (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', color: '#6f42c1', marginBottom: '30px' }}>
         Gerador de Contrato de Promessa de Compra e Venda
       </h1>
       
-      {/* Seção do Vendedor */}
       <div style={{ 
         backgroundColor: '#f8f9fa', 
         padding: '20px', 
@@ -551,16 +551,18 @@ export default function GeradorContratoImovel() {
               value={dados.vendedor.estadoCivil}
               onChange={(e) => handleChange(e, 'vendedor', 'estadoCivil')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Solteiro, casado, divorciado, etc."
             />
           </div>
           <div>
-           <label>Nacionalidade:</label>
+            <label>Nacionalidade:</label>
             <input
               type="text"
               value={dados.vendedor.nacionalidade}
               onChange={(e) => handleChange(e, 'vendedor', 'nacionalidade')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-              placeholder="Ex: brasileira, portuguesa, italiana..."  />
+              placeholder="Ex: brasileira, portuguesa, italiana..."
+            />
           </div>
           <div>
             <label>Profissão:</label>
@@ -611,7 +613,6 @@ export default function GeradorContratoImovel() {
         </div>
       </div>
 
-      {/* Seção do Comprador */}
       <div style={{ 
         backgroundColor: '#f8f9fa', 
         padding: '20px', 
@@ -637,6 +638,7 @@ export default function GeradorContratoImovel() {
               value={dados.comprador.estadoCivil}
               onChange={(e) => handleChange(e, 'comprador', 'estadoCivil')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Solteiro, casado, divorciado, etc."
             />
           </div>
           <div>
@@ -645,7 +647,9 @@ export default function GeradorContratoImovel() {
               type="text"
               value={dados.comprador.nacionalidade}
               onChange={(e) => handleChange(e, 'comprador', 'nacionalidade')}
-              style={{ width: '100%', padding: '8px', marginTop: '5px' }}/>
+              style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: brasileira, portuguesa, italiana..."
+            />
           </div>
           <div>
             <label>Profissão:</label>
@@ -696,7 +700,6 @@ export default function GeradorContratoImovel() {
         </div>
       </div>
 
-      {/* Seção do Imóvel */}
       <div style={{ 
         backgroundColor: '#f8f9fa', 
         padding: '20px', 
@@ -712,6 +715,7 @@ export default function GeradorContratoImovel() {
               onChange={(e) => handleChange(e, 'imovel', 'descricao')}
               style={{ width: '100%', padding: '8px', marginTop: '5px', minHeight: '100px' }}
               required
+              placeholder="Endereço completo, área, quartos, vagas de garagem, etc."
             />
           </div>
           <div>
@@ -730,6 +734,7 @@ export default function GeradorContratoImovel() {
               value={dados.imovel.cartorio}
               onChange={(e) => handleChange(e, 'imovel', 'cartorio')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: 1º Oficial de Registro de Imóveis"
             />
           </div>
           <div>
@@ -757,12 +762,12 @@ export default function GeradorContratoImovel() {
               value={dados.imovel.coisasNoImovel}
               onChange={(e) => handleChange(e, 'imovel', 'coisasNoImovel')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Móveis, eletrodomésticos, etc."
             />
           </div>
         </div>
       </div>
 
-      {/* Seção de Pagamento */}
       <div style={{ 
         backgroundColor: '#f8f9fa', 
         padding: '20px', 
@@ -779,6 +784,7 @@ export default function GeradorContratoImovel() {
               onChange={(e) => handleChange(e, 'pagamento', 'valorTotal')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
               required
+              placeholder="Ex: 500000,00"
             />
           </div>
           <div>
@@ -788,6 +794,7 @@ export default function GeradorContratoImovel() {
               value={dados.pagamento.valorSinal}
               onChange={(e) => handleChange(e, 'pagamento', 'valorSinal')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: 50000,00"
             />
           </div>
           <div>
@@ -797,6 +804,7 @@ export default function GeradorContratoImovel() {
               value={dados.pagamento.condicoesSinal}
               onChange={(e) => handleChange(e, 'pagamento', 'condicoesSinal')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: À vista, no ato da assinatura"
             />
           </div>
           <div>
@@ -806,6 +814,7 @@ export default function GeradorContratoImovel() {
               value={dados.pagamento.condicoesPagamentoFinal}
               onChange={(e) => handleChange(e, 'pagamento', 'condicoesPagamentoFinal')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: Financiamento bancário"
             />
           </div>
           <div>
@@ -815,6 +824,7 @@ export default function GeradorContratoImovel() {
               value={dados.pagamento.valorFinal}
               onChange={(e) => handleChange(e, 'pagamento', 'valorFinal')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: 450000,00"
             />
           </div>
           <div>
@@ -824,6 +834,7 @@ export default function GeradorContratoImovel() {
               value={dados.pagamento.dadosBancarios}
               onChange={(e) => handleChange(e, 'pagamento', 'dadosBancarios')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Banco, agência, conta, nome do titular"
             />
           </div>
           <div>
@@ -833,12 +844,12 @@ export default function GeradorContratoImovel() {
               value={dados.pagamento.prazoEscritura}
               onChange={(e) => handleChange(e, 'pagamento', 'prazoEscritura')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              min="1"
             />
           </div>
         </div>
       </div>
 
-      {/* Seção de Comissão */}
       <div style={{ 
         backgroundColor: '#f8f9fa', 
         padding: '20px', 
@@ -854,6 +865,7 @@ export default function GeradorContratoImovel() {
               value={dados.comissao.valor}
               onChange={(e) => handleChange(e, 'comissao', 'valor')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Ex: 15000,00"
             />
           </div>
           <div>
@@ -872,6 +884,7 @@ export default function GeradorContratoImovel() {
               value={dados.comissao.dadosImobiliaria}
               onChange={(e) => handleChange(e, 'comissao', 'dadosImobiliaria')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Banco, agência, conta, nome da imobiliária"
             />
           </div>
           <div>
@@ -890,12 +903,12 @@ export default function GeradorContratoImovel() {
               value={dados.comissao.dadosCorretor}
               onChange={(e) => handleChange(e, 'comissao', 'dadosCorretor')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
+              placeholder="Banco, agência, conta, nome do corretor"
             />
           </div>
         </div>
       </div>
 
-      {/* Botão de Gerar Contrato */}
       <div style={{ textAlign: 'center', marginTop: '30px' }}>
         <button
           onClick={gerarContrato}
@@ -913,12 +926,11 @@ export default function GeradorContratoImovel() {
         </button>
       </div>
     </div>
-  )
+  );
 
-  // Renderização principal
   return (
     <div style={{ padding: '20px' }}>
       {!contratoGerado ? renderFormulario() : renderContratoCompleto()}
     </div>
-  )
+  );
 }
