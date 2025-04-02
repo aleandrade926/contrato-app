@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface DadosContrato {
   vendedor: {
@@ -169,7 +170,10 @@ export default function GeradorContratoImovel() {
       fontSize: '12pt',
       lineHeight: '1.5',
       maxWidth: '800px',
-      margin: '0 auto'
+      margin: '0 auto',
+      backgroundColor: 'white',
+      boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+      borderRadius: '8px'
     }}>
       <h1 style={{ 
         textAlign: 'center', 
@@ -545,13 +549,13 @@ export default function GeradorContratoImovel() {
             />
           </div>
           <div>
-            <label>Estado Civil:</label>
+           
             <input
               type="text"
               value={dados.vendedor.estadoCivil}
               onChange={(e) => handleChange(e, 'vendedor', 'estadoCivil')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-              placeholder="Solteiro, casado, divorciado, etc."
+              placeholder="Estado Civil:"
             />
           </div>
           <div>
@@ -928,9 +932,10 @@ export default function GeradorContratoImovel() {
     </div>
   );
 
-  return (
-    <div style={{ padding: '20px' }}>
-      {!contratoGerado ? renderFormulario() : renderContratoCompleto()}
-    </div>
-  );
-}
+  export default function GeradorContrato() {
+    return (
+      <div className="contract-container">
+        {!contratoGerado ? renderFormulario() : renderContratoCompleto()}
+      </div>
+    );
+  }
