@@ -642,7 +642,7 @@ export default function GeradorContratoImovel() {
               value={dados.comprador.estadoCivil}
               onChange={(e) => handleChange(e, 'comprador', 'estadoCivil')}
               style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-              placeholder="Solteiro, casado, divorciado, etc."
+              placeholder="Estado Civil:"
             />
           </div>
           <div>
